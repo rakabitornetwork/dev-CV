@@ -10,6 +10,8 @@ const applying = ref(false);
 const screen = ref(null);
 const stickToEnd = ref(true);
 let timer = null;
+let scrollFrame = null;
+let scrolling = false;
 
 const job = computed(() => data.value?.job ?? { state: 'idle', steps: [], message: '' });
 const busy = computed(() => pending.value || applying.value || job.value.state === 'running');
@@ -118,17 +120,54 @@ const lines = computed(() => {
 
 function onScreenScroll() {
     const element = screen.value;
-    if (!element) {
+    if (!element || scrolling) {
         return;
     }
 
     stickToEnd.value = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
 }
 
+function scrollScreenToEnd() {
+    const element = screen.value;
+    if (!element) {
+        return;
+    }
+
+    const target = element.scrollHeight - element.clientHeight;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || Math.abs(target - element.scrollTop) < 1) {
+        element.scrollTop = target;
+        return;
+    }
+
+    const start = element.scrollTop;
+    const distance = target - start;
+    const duration = 650;
+    const started = performance.now();
+    if (scrollFrame) {
+        cancelAnimationFrame(scrollFrame);
+    }
+    scrolling = true;
+
+    const step = (now) => {
+        const progress = Math.min(1, (now - started) / duration);
+        const eased = 1 - (1 - progress) ** 3;
+        element.scrollTop = start + distance * eased;
+        if (progress < 1) {
+            scrollFrame = requestAnimationFrame(step);
+            return;
+        }
+        scrolling = false;
+        scrollFrame = null;
+    };
+
+    scrollFrame = requestAnimationFrame(step);
+}
+
 watch(lines, async () => {
     await nextTick();
-    if (stickToEnd.value && screen.value) {
-        screen.value.scrollTop = screen.value.scrollHeight;
+    if (stickToEnd.value) {
+        scrollScreenToEnd();
     }
 });
 
@@ -243,7 +282,12 @@ onMounted(async () => {
     }
 });
 
-onUnmounted(stop);
+onUnmounted(() => {
+    stop();
+    if (scrollFrame) {
+        cancelAnimationFrame(scrollFrame);
+    }
+});
 </script>
 
 <template>
@@ -282,7 +326,7 @@ onUnmounted(stop);
             <div class="relative h-[28rem]">
                 <div
                     ref="screen"
-                    class="h-full overflow-auto px-4 py-3 font-mono text-[13px] leading-6 text-[#d7e0d8]"
+                    class="term-screen h-full overflow-auto px-4 py-3 font-mono text-[13px] leading-6 text-[#d7e0d8]"
                     @scroll="onScreenScroll"
                 >
                     <p v-for="(line, index) in lines" :key="index" class="whitespace-pre-wrap break-words">
@@ -304,8 +348,18 @@ onUnmounted(stop);
 </template>
 
 <style scoped>
+.term-screen {
+    scroll-behavior: smooth;
+}
+
 .term-cursor {
     animation: term-blink 1.05s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .term-screen {
+        scroll-behavior: auto;
+    }
 }
 
 @keyframes term-blink {
