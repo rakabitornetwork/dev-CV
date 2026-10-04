@@ -134,7 +134,7 @@ function Hero({ profile, socials }) {
     return (
         <section id="atas" className="relative overflow-hidden">
             <img
-                src="/images/hero-workshop.jpg"
+                src="/images/hero-about.jpg"
                 alt=""
                 className="cv-hero-bg pointer-events-none absolute inset-0 h-full w-full object-cover object-[72%_center]"
             />
