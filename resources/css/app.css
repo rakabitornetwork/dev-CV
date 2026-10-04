@@ -46,6 +46,79 @@ html {
     scroll-behavior: smooth;
 }
 
+@keyframes cv-rise {
+    from {
+        opacity: 0;
+        transform: translateY(1.15rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes cv-rise-photo {
+    from {
+        opacity: 0;
+        transform: translateY(1.75rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes cv-hero-bg {
+    from {
+        opacity: 0;
+        transform: scale(1.045);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.cv-enter {
+    animation: cv-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cv-enter-photo {
+    animation: cv-rise-photo 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cv-hero-bg {
+    animation: cv-hero-bg 1.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .cv-heading,
+    .cv-stagger > * {
+        opacity: 0;
+        transform: translateY(1.1rem);
+    }
+
+    .is-in .cv-heading,
+    .is-in .cv-stagger > * {
+        animation: cv-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation-delay: var(--cv-delay, 0ms);
+    }
+
+    .cv-meter {
+        transform: scaleX(0);
+        transform-origin: left center;
+    }
+
+    .is-in .cv-meter {
+        transform: scaleX(1);
+        transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+        transition-delay: calc(var(--cv-delay, 0ms) + 120ms);
+    }
+}
+
 body {
     font-family: var(--font-sans);
 }

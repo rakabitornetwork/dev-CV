@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CvIcon, formatMonth, sectionIcons } from './icons';
 
 const collections = {
@@ -97,12 +97,12 @@ export default function App({ cv }) {
                 ))}
             </main>
 
-            <footer className="border-t border-cv-line">
-                <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-8 text-sm text-cv-muted sm:flex-row sm:items-center sm:justify-between">
-                    <p>{profile.name}</p>
-                    <p>{[profile.location, new Date().getFullYear()].filter(Boolean).join(' · ')}</p>
+            <Reveal as="footer" className="border-t border-cv-line">
+                <div className="cv-stagger mx-auto flex max-w-6xl flex-col gap-2 px-5 py-8 text-sm text-cv-muted sm:flex-row sm:items-center sm:justify-between">
+                    <p style={{ '--cv-delay': '0ms' }}>{profile.name}</p>
+                    <p style={{ '--cv-delay': '80ms' }}>{[profile.location, new Date().getFullYear()].filter(Boolean).join(' · ')}</p>
                 </div>
-            </footer>
+            </Reveal>
         </div>
     );
 }
@@ -136,14 +136,14 @@ function Hero({ profile, socials }) {
             <img
                 src="/images/hero-workshop.jpg"
                 alt=""
-                className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[72%_center]"
+                className="cv-hero-bg pointer-events-none absolute inset-0 h-full w-full object-cover object-[72%_center]"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cv-bg via-cv-bg/90 to-cv-bg/40" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-cv-bg/25 via-transparent to-cv-bg" />
             <div className="relative mx-auto grid max-w-6xl items-end gap-12 px-5 pt-16 pb-20 lg:grid-cols-12 lg:pt-24">
                 <div className="lg:col-span-7">
                     {profile.availability_label && (
-                        <p className="inline-flex items-center gap-2 rounded-full border border-cv-line bg-cv-elevated px-3 py-1 text-sm text-cv-muted">
+                        <p className="cv-enter inline-flex items-center gap-2 rounded-full border border-cv-line bg-cv-elevated px-3 py-1 text-sm text-cv-muted">
                             <span className="relative flex size-2">
                                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-75" />
                                 <span className="relative size-2 rounded-full bg-emerald-500" />
@@ -151,12 +151,22 @@ function Hero({ profile, socials }) {
                             {profile.availability_label}
                         </p>
                     )}
-                    <h1 className="mt-6 font-display text-[3.15rem] leading-[0.92] tracking-tight text-balance sm:text-7xl lg:text-8xl">
+                    <h1
+                        className="cv-enter mt-6 font-display text-[3.15rem] leading-[0.92] tracking-tight text-balance sm:text-7xl lg:text-8xl"
+                        style={{ animationDelay: '90ms' }}
+                    >
                         {profile.name}
                     </h1>
-                    <p className="mt-6 max-w-xl text-xl leading-snug text-cv-muted text-pretty">{profile.headline}</p>
-                    <p className="mt-4 max-w-xl text-base leading-relaxed text-pretty">{profile.summary}</p>
-                    <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <p
+                        className="cv-enter mt-6 max-w-xl text-xl leading-snug text-cv-muted text-pretty"
+                        style={{ animationDelay: '180ms' }}
+                    >
+                        {profile.headline}
+                    </p>
+                    <p className="cv-enter mt-4 max-w-xl text-base leading-relaxed text-pretty" style={{ animationDelay: '260ms' }}>
+                        {profile.summary}
+                    </p>
+                    <div className="cv-enter mt-8 flex flex-col gap-3 sm:flex-row" style={{ animationDelay: '360ms' }}>
                         {profile.cv_url && (
                             <a
                                 href={profile.cv_url}
@@ -175,7 +185,7 @@ function Hero({ profile, socials }) {
                         </a>
                     </div>
                     {socials.length > 0 && (
-                        <div className="mt-8 flex flex-wrap gap-2">
+                        <div className="cv-enter mt-8 flex flex-wrap gap-2" style={{ animationDelay: '460ms' }}>
                             {socials.map((social) => {
                                 const brand = socialBrand(social);
 
@@ -195,7 +205,7 @@ function Hero({ profile, socials }) {
                         </div>
                     )}
                 </div>
-                <div className="lg:col-span-5">
+                <div className="cv-enter-photo lg:col-span-5" style={{ animationDelay: '180ms' }}>
                     <div className="relative mx-auto max-w-sm">
                         <div className="absolute top-6 -left-3 hidden h-full w-full rounded-[2rem] border border-cv-accent/50 lg:block" />
                         <div className="relative overflow-hidden rounded-[2rem] border border-cv-line bg-cv-elevated">
@@ -218,9 +228,9 @@ function SectionBlock({ section, index, cv, profile }) {
     const items = cv[collections[section.key]] ?? [];
 
     return (
-        <section id={section.key} className="scroll-mt-24 border-t border-cv-line py-16 sm:py-20">
+        <Reveal as="section" id={section.key} className="scroll-mt-24 border-t border-cv-line py-16 sm:py-20">
             <div className="mx-auto grid max-w-6xl gap-8 px-5 md:grid-cols-12">
-                <div className="md:col-span-4">
+                <div className="cv-heading md:col-span-4">
                     <p className="font-display text-sm tracking-[0.22em] text-cv-accent">
                         {String(index).padStart(2, '0')}
                     </p>
@@ -239,8 +249,53 @@ function SectionBlock({ section, index, cv, profile }) {
                     {section.key === 'contact' && <Contact profile={profile} socials={cv.social_links ?? []} />}
                 </div>
             </div>
-        </section>
+        </Reveal>
     );
+}
+
+function Reveal({ as: Tag = 'div', className = '', children, ...rest }) {
+    const [ref, shown] = useInView();
+
+    return (
+        <Tag ref={ref} className={`${shown ? 'is-in' : ''} ${className}`.trim()} {...rest}>
+            {children}
+        </Tag>
+    );
+}
+
+function useInView() {
+    const ref = useRef(null);
+    const [shown, setShown] = useState(false);
+
+    useEffect(() => {
+        const node = ref.current;
+
+        if (!node) {
+            return undefined;
+        }
+
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            setShown(true);
+
+            return undefined;
+        }
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setShown(true);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.08, rootMargin: '0px 0px 48px 0px' },
+        );
+
+        observer.observe(node);
+
+        return () => observer.disconnect();
+    }, []);
+
+    return [ref, shown];
 }
 
 function Empty({ children }) {
@@ -253,9 +308,11 @@ function About({ bio }) {
     }
 
     return (
-        <div className="space-y-4 text-lg leading-relaxed text-pretty">
-            {bio.split('\n').filter(Boolean).map((paragraph) => (
-                <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+        <div className="cv-stagger space-y-4 text-lg leading-relaxed text-pretty">
+            {bio.split('\n').filter(Boolean).map((paragraph, index) => (
+                <p key={paragraph.slice(0, 24)} style={{ '--cv-delay': `${index * 80}ms` }}>
+                    {paragraph}
+                </p>
             ))}
         </div>
     );
@@ -267,9 +324,9 @@ function Experience({ items }) {
     }
 
     return (
-        <ol className="relative space-y-8 border-l border-cv-line pl-6">
-            {items.map((item) => (
-                <li key={item.id} className="relative">
+        <ol className="cv-stagger relative space-y-8 border-l border-cv-line pl-6">
+            {items.map((item, index) => (
+                <li key={item.id} className="relative" style={{ '--cv-delay': `${index * 70}ms` }}>
                     <span className="absolute top-1.5 -left-[1.72rem] size-3 rounded-full border-2 border-cv-accent bg-cv-bg" />
                     <p className="text-sm text-cv-accent">
                         {formatMonth(item.start_date)} — {item.is_current ? 'Sekarang' : formatMonth(item.end_date)}
@@ -292,9 +349,13 @@ function Education({ items }) {
     }
 
     return (
-        <div className="space-y-6">
-            {items.map((item) => (
-                <article key={item.id} className="rounded-3xl border border-cv-line bg-cv-elevated p-5">
+        <div className="cv-stagger space-y-6">
+            {items.map((item, index) => (
+                <article
+                    key={item.id}
+                    className="rounded-3xl border border-cv-line bg-cv-elevated p-5"
+                    style={{ '--cv-delay': `${index * 80}ms` }}
+                >
                     <p className="text-sm text-cv-accent">
                         {item.start_year}
                         {item.end_year ? ` — ${item.end_year}` : ''}
@@ -317,15 +378,15 @@ function Skills({ items }) {
     }
 
     return (
-        <div className="grid gap-5 sm:grid-cols-2">
-            {items.map((item) => (
-                <div key={item.id}>
+        <div className="cv-stagger grid gap-5 sm:grid-cols-2">
+            {items.map((item, index) => (
+                <div key={item.id} style={{ '--cv-delay': `${index * 70}ms` }}>
                     <div className="mb-2 flex items-baseline justify-between gap-3">
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-cv-muted">{item.level}</p>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-cv-line" role="presentation">
-                        <div className="h-full rounded-full bg-cv-accent" style={{ width: `${item.level}%` }} />
+                        <div className="cv-meter h-full rounded-full bg-cv-accent" style={{ width: `${item.level}%` }} />
                     </div>
                     {item.category && <p className="mt-2 text-xs tracking-wide text-cv-muted uppercase">{item.category}</p>}
                 </div>
@@ -340,8 +401,8 @@ function Projects({ items }) {
     }
 
     return (
-        <div className="grid gap-5">
-            {items.map((item) => {
+        <div className="cv-stagger grid gap-5">
+            {items.map((item, index) => {
                 const card = (
                     <>
                         <div className="overflow-hidden bg-cv-accent-soft">
@@ -371,13 +432,14 @@ function Projects({ items }) {
                 );
 
                 const className = 'block overflow-hidden rounded-[1.6rem] border border-cv-line bg-cv-elevated';
+                const style = { '--cv-delay': `${index * 80}ms` };
 
                 return item.url ? (
-                    <a key={item.id} href={item.url} target="_blank" rel="noreferrer" className={className}>
+                    <a key={item.id} href={item.url} target="_blank" rel="noreferrer" className={className} style={style}>
                         {card}
                     </a>
                 ) : (
-                    <article key={item.id} className={className}>
+                    <article key={item.id} className={className} style={style}>
                         {card}
                     </article>
                 );
@@ -392,9 +454,13 @@ function Testimonials({ items }) {
     }
 
     return (
-        <div className="space-y-5">
-            {items.map((item) => (
-                <figure key={item.id} className="rounded-[1.6rem] border border-cv-line bg-cv-elevated p-5 sm:p-6">
+        <div className="cv-stagger space-y-5">
+            {items.map((item, index) => (
+                <figure
+                    key={item.id}
+                    className="rounded-[1.6rem] border border-cv-line bg-cv-elevated p-5 sm:p-6"
+                    style={{ '--cv-delay': `${index * 80}ms` }}
+                >
                     <CvIcon name="Quote" className="size-5 text-cv-accent" />
                     <blockquote className="mt-4 font-display text-2xl leading-snug text-pretty">{item.quote}</blockquote>
                     <figcaption className="mt-5 flex items-center gap-3">
@@ -431,8 +497,8 @@ function Contact({ profile, socials }) {
     }
 
     return (
-        <div className="space-y-4">
-            {rows.map((row) => {
+        <div className="cv-stagger space-y-4">
+            {rows.map((row, index) => {
                 const body = (
                     <span className="flex items-center gap-3 rounded-2xl border border-cv-line bg-cv-elevated px-4 py-4">
                         <CvIcon name={row.icon} className="size-5 text-cv-accent" />
@@ -441,15 +507,17 @@ function Contact({ profile, socials }) {
                 );
 
                 return row.href ? (
-                    <a key={row.label} href={row.href} className="block">
+                    <a key={row.label} href={row.href} className="block" style={{ '--cv-delay': `${index * 70}ms` }}>
                         {body}
                     </a>
                 ) : (
-                    <div key={row.label}>{body}</div>
+                    <div key={row.label} style={{ '--cv-delay': `${index * 70}ms` }}>
+                        {body}
+                    </div>
                 );
             })}
             {socials.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2" style={{ '--cv-delay': `${rows.length * 70}ms` }}>
                     {socials.map((social) => (
                         <a
                             key={social.id}
