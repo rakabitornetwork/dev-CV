@@ -12,7 +12,7 @@ const collections = {
 export default function App({ cv }) {
     const profile = cv?.profile;
     const sections = cv?.sections ?? [];
-    const [theme, setTheme] = useState(() => (localStorage.getItem('cv-theme') === 'light' ? 'light' : 'dark'));
+    const [theme] = useState(() => (localStorage.getItem('cv-theme') === 'light' ? 'light' : 'dark'));
     const [menuOpen, setMenuOpen] = useState(false);
 
     useEffect(() => {
@@ -47,14 +47,6 @@ export default function App({ cv }) {
                         ))}
                     </nav>
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            className="grid size-10 place-items-center rounded-full border border-cv-line"
-                            onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
-                            aria-label={theme === 'dark' ? 'Ganti ke tema terang' : 'Ganti ke tema gelap'}
-                        >
-                            <CvIcon name={theme === 'dark' ? 'Sun' : 'Moon'} className="size-4" />
-                        </button>
                         <button
                             type="button"
                             className="grid size-10 place-items-center rounded-full border border-cv-line lg:hidden"
@@ -132,18 +124,19 @@ function socialBrand(social) {
 
 function Hero({ profile, socials }) {
     return (
-        <section id="atas" className="relative overflow-hidden">
+        <section id="atas" className="relative overflow-hidden bg-[#0c0c0a] text-[#f4f0e6]">
             <img
-                src="/images/hero-about.jpg"
+                src="/images/hero-office.jpg?v=monitor"
                 alt=""
-                className="cv-hero-bg pointer-events-none absolute inset-0 h-full w-full object-cover object-[72%_center]"
+                className="cv-hero-bg pointer-events-none absolute inset-0 h-full w-full object-cover object-[22%_46%]"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cv-bg via-cv-bg/90 to-cv-bg/40" />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-cv-bg/25 via-transparent to-cv-bg" />
-            <div className="relative mx-auto grid max-w-6xl items-end gap-12 px-5 pt-16 pb-20 lg:grid-cols-12 lg:pt-24">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0c0c0a]/95 via-[#0c0c0a]/78 via-[28%] to-transparent to-[56%]" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-[#0c0c0a] via-[#0c0c0a]/80 via-[40%] to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-cv-bg" />
+            <div className="relative mx-auto grid max-w-6xl items-end gap-12 px-5 pt-16 pb-20 lg:min-h-[42rem] lg:grid-cols-12 lg:items-center lg:pt-24">
                 <div className="lg:col-span-7">
                     {profile.availability_label && (
-                        <p className="cv-enter inline-flex items-center gap-2 rounded-full border border-cv-line bg-cv-elevated px-3 py-1 text-sm text-cv-muted">
+                        <p className="cv-enter inline-flex items-center gap-2 rounded-full border border-white/15 bg-[#161613]/80 px-3 py-1 text-sm text-[#aaa396]">
                             <span className="relative flex size-2">
                                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-75" />
                                 <span className="relative size-2 rounded-full bg-emerald-500" />
@@ -158,7 +151,7 @@ function Hero({ profile, socials }) {
                         {profile.name}
                     </h1>
                     <p
-                        className="cv-enter mt-6 max-w-xl text-xl leading-snug text-cv-muted text-pretty"
+                        className="cv-enter mt-6 max-w-xl text-xl leading-snug text-[#aaa396] text-pretty"
                         style={{ animationDelay: '180ms' }}
                     >
                         {profile.headline}
@@ -170,7 +163,7 @@ function Hero({ profile, socials }) {
                         {profile.cv_url && (
                             <a
                                 href={profile.cv_url}
-                                className="inline-flex items-center justify-center gap-2 rounded-full bg-cv-ink px-5 py-3 text-sm text-cv-bg"
+                                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#f4f0e6] px-5 py-3 text-sm text-[#0c0c0a]"
                             >
                                 <CvIcon name="Download" className="size-4" />
                                 Unduh CV
@@ -178,7 +171,7 @@ function Hero({ profile, socials }) {
                         )}
                         <a
                             href={profile.email ? `mailto:${profile.email}` : '#contact'}
-                            className="inline-flex items-center justify-center gap-2 rounded-full border border-cv-line px-5 py-3 text-sm"
+                            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm text-[#f4f0e6]"
                         >
                             <CvIcon name="Mail" className="size-4" />
                             Hubungi saya
@@ -193,11 +186,14 @@ function Hero({ profile, socials }) {
                                     <a
                                         key={social.id}
                                         href={social.url}
-                                        className={`inline-flex items-center gap-2 rounded-full border bg-cv-elevated px-3 py-2 text-sm text-cv-muted hover:text-cv-ink ${brand.chip}`}
+                                        className={`inline-flex items-center gap-2 rounded-full border bg-[#161613]/85 px-3 py-2 text-sm text-[#aaa396] hover:text-[#f4f0e6] ${brand.chip}`}
                                         target={social.url.startsWith('http') ? '_blank' : undefined}
                                         rel={social.url.startsWith('http') ? 'noreferrer' : undefined}
                                     >
-                                        <CvIcon name={brand.icon} className={`size-4 ${brand.iconClass}`} />
+                                        <CvIcon
+                                            name={brand.icon}
+                                            className={`size-4 ${brand.icon === 'Github' ? 'text-white' : brand.iconClass}`}
+                                        />
                                         {social.label}
                                     </a>
                                 );
@@ -207,8 +203,8 @@ function Hero({ profile, socials }) {
                 </div>
                 <div className="cv-enter-photo lg:col-span-5" style={{ animationDelay: '180ms' }}>
                     <div className="relative mx-auto max-w-sm">
-                        <div className="absolute top-6 -left-3 hidden h-full w-full rounded-[2rem] border border-cv-accent/50 lg:block" />
-                        <div className="relative overflow-hidden rounded-[2rem] border border-cv-line bg-cv-elevated">
+                        <div className="absolute top-6 -left-3 hidden h-full w-full rounded-[2rem] border border-[#e4c79a]/50 lg:block" />
+                        <div className="relative overflow-hidden rounded-[2rem] border border-white/15 bg-[#161613]">
                             {profile.photo_url ? (
                                 <img src={profile.photo_url} alt="" className="aspect-[4/5] w-full object-cover" />
                             ) : (
