@@ -6,10 +6,11 @@ const data = ref(null);
 const notice = ref('');
 const error = ref('');
 const pending = ref(false);
+const applying = ref(false);
 let timer = null;
 
 const job = computed(() => data.value?.job ?? { state: 'idle', steps: [], message: '' });
-const busy = computed(() => pending.value || ['queued', 'running'].includes(job.value.state));
+const busy = computed(() => pending.value || applying.value || job.value.state === 'running');
 const missing = computed(() => {
     const binaries = data.value?.binaries ?? {};
 
@@ -71,9 +72,10 @@ async function apply(mode) {
         return;
     }
 
-    pending.value = true;
+    applying.value = true;
     error.value = '';
     notice.value = '';
+    watchJob();
 
     try {
         const nextJob = await api('/admin/api/updates', {
@@ -81,11 +83,21 @@ async function apply(mode) {
             body: { confirm: true, mode },
         });
         data.value = { ...data.value, job: nextJob };
-        watchJob();
+        if (nextJob.state !== 'running') {
+            stop();
+            if (nextJob.state === 'failed') {
+                error.value = nextJob.message || 'Pembaruan gagal.';
+            } else {
+                notice.value = nextJob.message || 'Pembaruan selesai.';
+            }
+        }
     } catch (caught) {
-        error.value = caught.errors?.update?.[0] || caught.message;
+        if ([401, 419, 422].includes(caught.status)) {
+            error.value = caught.errors?.update?.[0] || caught.message;
+            stop();
+        }
     } finally {
-        pending.value = false;
+        applying.value = false;
     }
 }
 
@@ -95,12 +107,12 @@ function watchJob() {
         try {
             const next = await api('/admin/api/updates');
             data.value = next;
-            if (!['queued', 'running'].includes(next.job?.state)) {
+            if (next.job?.state === 'success' || next.job?.state === 'failed') {
                 stop();
-                if (next.job?.state === 'failed') {
+                if (next.job.state === 'failed') {
                     error.value = next.job.message || 'Pembaruan gagal.';
                 } else {
-                    notice.value = next.job?.message || 'Pembaruan selesai.';
+                    notice.value = next.job.message || 'Pembaruan selesai.';
                 }
             }
         } catch (caught) {
@@ -119,7 +131,7 @@ function stop() {
 
 onMounted(async () => {
     await load();
-    if (['queued', 'running'].includes(data.value?.job?.state)) {
+    if (data.value?.job?.state === 'running') {
         watchJob();
     }
 });
@@ -170,10 +182,10 @@ onUnmounted(stop);
                 :disabled="busy || blocked || !data?.pending?.count"
                 @click="apply('update')"
             >
-                Pasang pembaruan
+                {{ applying ? 'Memasang…' : 'Pasang pembaruan' }}
             </button>
             <button type="button" class="rounded-full border border-cv-line px-5 py-3 text-sm disabled:opacity-60" :disabled="busy || blocked" @click="apply('rebuild')">
-                Pasang ulang
+                {{ applying ? 'Memasang…' : 'Pasang ulang' }}
             </button>
         </div>
 

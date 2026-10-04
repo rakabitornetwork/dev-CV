@@ -74,7 +74,7 @@ class Deployer
     public function dispatch(bool $rebuild): array
     {
         $job = $this->readJob();
-        if (in_array($job['state'], ['queued', 'running'], true) && $this->fresh($job)) {
+        if ($job['state'] === 'running' && $this->fresh($job)) {
             throw ValidationException::withMessages([
                 'update' => 'Pembaruan masih berjalan.',
             ]);
@@ -91,15 +91,12 @@ class Deployer
             ]);
         }
 
-        $this->writeJob([
-            'state' => 'queued',
-            'mode' => $rebuild ? 'rebuild' : 'update',
-            'message' => 'Pembaruan dijadwalkan.',
-            'started_at' => now()->toIso8601String(),
-            'finished_at' => null,
-            'steps' => [],
-        ]);
-        $this->spawn($rebuild);
+        ignore_user_abort(true);
+        if (session()->isStarted()) {
+            session()->save();
+        }
+
+        $this->run($rebuild);
 
         return $this->readJob();
     }
@@ -111,6 +108,10 @@ class Deployer
         $maintenance = false;
 
         try {
+            if (! function_exists('proc_open')) {
+                throw new RuntimeException('PHP di server mematikan proc_open, jadi git dan composer tidak bisa dijalankan dari panel. Jalankan php artisan app:update lewat SSH.');
+            }
+
             $missing = $this->missingBinaries($rebuild);
             if ($missing !== []) {
                 throw new RuntimeException('Program belum tersedia untuk PHP di server: '.implode(', ', $missing).'.');
@@ -217,20 +218,20 @@ class Deployer
             [
                 'key' => 'migrate',
                 'label' => 'Migrasi database',
-                'command' => [PHP_BINARY, base_path('artisan'), 'migrate', '--force'],
+                'command' => $this->artisanCommand(['migrate', '--force']),
                 'timeout' => 180,
             ],
             [
                 'key' => 'storage',
                 'label' => 'Tautan berkas',
-                'command' => [PHP_BINARY, base_path('artisan'), 'storage:link'],
+                'command' => $this->artisanCommand(['storage:link']),
                 'timeout' => 60,
                 'allow_existing' => true,
             ],
             [
                 'key' => 'optimize',
                 'label' => 'Optimasi',
-                'command' => [PHP_BINARY, base_path('artisan'), 'optimize'],
+                'command' => $this->artisanCommand(['optimize']),
                 'timeout' => 120,
             ],
         ];
@@ -358,21 +359,6 @@ class Deployer
         return $started !== false && (time() - $started) < 1200;
     }
 
-    private function spawn(bool $rebuild): void
-    {
-        $php = escapeshellarg(PHP_BINARY);
-        $artisan = escapeshellarg(base_path('artisan'));
-        $flag = $rebuild ? ' --rebuild' : '';
-
-        if (PHP_OS_FAMILY === 'Windows') {
-            pclose(popen('start /B "" '.$php.' '.$artisan.' app:update'.$flag, 'r'));
-
-            return;
-        }
-
-        exec('nohup '.$php.' '.$artisan.' app:update'.$flag.' > /dev/null 2>&1 &');
-    }
-
     /**
      * @param  array<int, string>  $arguments
      */
@@ -399,7 +385,46 @@ class Deployer
      */
     private function artisan(array $arguments): ProcessResult
     {
-        return $this->command(array_merge([PHP_BINARY, base_path('artisan')], $arguments), 60);
+        return $this->command($this->artisanCommand($arguments), 60);
+    }
+
+    /**
+     * @param  array<int, string>  $arguments
+     * @return array<int, string>
+     */
+    private function artisanCommand(array $arguments): array
+    {
+        return array_merge([$this->phpCli(), base_path('artisan')], $arguments);
+    }
+
+    private function phpCli(): string
+    {
+        if ($this->phpCli !== null) {
+            return $this->phpCli;
+        }
+
+        if (PHP_SAPI === 'cli' && ! str_contains(strtolower(PHP_BINARY), 'fpm')) {
+            return $this->phpCli = PHP_BINARY;
+        }
+
+        $names = PHP_OS_FAMILY === 'Windows'
+            ? ['php.exe']
+            : ['php', 'php8.4', 'php8.3', 'php8.2'];
+        $directories = array_unique(array_merge(
+            ['/usr/bin', '/usr/local/bin', PHP_BINDIR, dirname(PHP_BINARY)],
+            $this->extraDirectories(),
+        ));
+
+        foreach ($directories as $directory) {
+            foreach ($names as $name) {
+                $path = $directory.DIRECTORY_SEPARATOR.$name;
+                if (is_file($path) && ! str_contains(strtolower($path), 'fpm')) {
+                    return $this->phpCli = $path;
+                }
+            }
+        }
+
+        return $this->phpCli = PHP_BINARY;
     }
 
     /**
@@ -649,14 +674,18 @@ class Deployer
     {
         $current = getenv('PATH') ?: getenv('Path') ?: '';
         $separator = PHP_OS_FAMILY === 'Windows' ? ';' : ':';
+        $directories = $this->extraDirectories();
+        array_unshift($directories, dirname($this->phpCli()));
 
-        return implode($separator, [...$this->extraDirectories(), $current]);
+        return implode($separator, [...$directories, $current]);
     }
 
     /**
      * @var array<string, string|null>
      */
     private array $binaries = [];
+
+    private ?string $phpCli = null;
 
     /**
      * @return array{state: string, mode: string|null, message: string|null, started_at: string|null, finished_at: string|null, steps: array<int, array<string, string>>}
