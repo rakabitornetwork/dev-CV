@@ -68,7 +68,7 @@
     "src": "_syne-800-normal-EehdNYzx.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-yXWvf6L1.css",
+    "file": "assets/app-Ycz7cZgG.css",
     "name": "app",
     "names": [
       "app.css"
@@ -77,10 +77,13 @@
     "isEntry": true
   },
   "resources/js/admin/main.js": {
-    "file": "assets/main-CMphePIG.js",
+    "file": "assets/main-BkCj5LCh.js",
     "name": "main",
     "src": "resources/js/admin/main.js",
-    "isEntry": true
+    "isEntry": true,
+    "css": [
+      "assets/main-DTAg9UnE.css"
+    ]
   },
   "resources/js/public/main.jsx": {
     "file": "assets/main-Goi6F_JV.js",

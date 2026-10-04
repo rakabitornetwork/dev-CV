@@ -35,14 +35,14 @@ router.afterEach(close);
     <div class="min-h-screen md:grid md:grid-cols-[16.5rem_1fr]">
         <div v-if="open" class="fixed inset-0 z-30 bg-black/50 md:hidden" @click="close" />
         <aside
-            class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-cv-line bg-cv-elevated p-4 transition md:static md:w-auto md:translate-x-0"
+            class="fixed inset-y-0 left-0 z-40 flex h-dvh w-64 flex-col overflow-hidden border-r border-cv-line bg-cv-elevated p-4 transition md:sticky md:top-0 md:z-0 md:h-dvh md:w-auto md:self-start"
             :class="open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
         >
             <div class="px-2 py-2">
                 <p class="font-display text-lg">Panel CV</p>
                 <p class="truncate text-sm text-cv-muted">{{ currentUser?.name }}</p>
             </div>
-            <nav class="mt-4 flex flex-1 flex-col gap-1">
+            <nav class="mt-4 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
                 <RouterLink
                     v-for="item in navigation"
                     :key="item.to"

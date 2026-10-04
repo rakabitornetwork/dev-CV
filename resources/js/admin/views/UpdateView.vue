@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { api } from '../api';
 
 const data = ref(null);
@@ -7,6 +7,8 @@ const notice = ref('');
 const error = ref('');
 const pending = ref(false);
 const applying = ref(false);
+const screen = ref(null);
+const stickToEnd = ref(true);
 let timer = null;
 
 const job = computed(() => data.value?.job ?? { state: 'idle', steps: [], message: '' });
@@ -24,6 +26,111 @@ const statusLabel = {
     failed: 'Gagal',
     skipped: 'Dilewati',
 };
+const statusMark = {
+    pending: '..',
+    running: '>>',
+    ok: 'ok',
+    failed: '!!',
+    skipped: '--',
+};
+
+const host = computed(() => {
+    try {
+        return new URL(data.value?.site || window.location.origin).host;
+    } catch {
+        return 'server';
+    }
+});
+
+const prompt = computed(() => `${host.value}:~$`);
+
+const lines = computed(() => {
+    const rows = [];
+    const write = (kind, text) => rows.push({ kind, text });
+    const info = data.value;
+
+    write('prompt', `${prompt.value} status`);
+    write('out', `situs        ${info?.site || '…'}`);
+    write('out', `repositori   ${info?.repository || '…'}`);
+    write('out', `cabang       ${info?.branch || 'main'}`);
+    if (info?.commit) {
+        write('out', `versi        ${info.commit.short}  ${info.commit.subject}`);
+        write('dim', `tanggal      ${formatDate(info.commit.date)}`);
+    } else {
+        write('dim', 'versi        belum terbaca');
+    }
+    if (info?.binaries?.php) {
+        write('dim', `php          ${info.binaries.php}`);
+    }
+
+    if (missing.value.length) {
+        write('prompt', `${prompt.value} which ${missing.value.join(' ')}`);
+        write('err', `tidak ditemukan: ${missing.value.join(', ')}`);
+    }
+
+    if (info?.dirty?.length) {
+        write('prompt', `${prompt.value} git status --porcelain`);
+        info.dirty.forEach((file) => write('err', ` M ${file}`));
+        write('err', 'pembaruan dihentikan supaya perubahan lokal tidak tertimpa');
+    }
+
+    if ((info?.ahead ?? 0) > 0) {
+        write('err', `server punya ${info.ahead} komit yang belum ada di GitHub`);
+    }
+
+    if (info?.pending?.commits?.length) {
+        write('prompt', `${prompt.value} git log HEAD..origin/${info.branch || 'main'}`);
+        info.pending.commits.forEach((commit) => write('ok', `${commit.hash}  ${commit.subject}`));
+    } else if (info?.checked && !info?.error) {
+        write('prompt', `${prompt.value} git rev-list --count HEAD..origin/${info.branch || 'main'}`);
+        write('ok', '0  sudah sama dengan GitHub');
+    }
+
+    if (notice.value) {
+        write('ok', notice.value);
+    }
+    if (error.value) {
+        write('err', error.value);
+    }
+    if (info?.error && info.error !== error.value) {
+        write('err', info.error);
+    }
+
+    if (job.value.steps?.length) {
+        write('prompt', `${prompt.value} app:update`);
+        job.value.steps.forEach((step) => {
+            const kind = step.status === 'failed' ? 'err' : step.status === 'ok' ? 'ok' : 'dim';
+            write(kind, `[${statusMark[step.status] || '  '}] ${step.label}  ${statusLabel[step.status] || step.status}`);
+            if (step.output) {
+                step.output.split(/\r?\n/).forEach((line) => write('dim', `    ${line}`));
+            }
+        });
+    }
+
+    if (job.value.message && job.value.state !== 'idle') {
+        write(job.value.state === 'failed' ? 'err' : 'ok', job.value.message);
+    }
+
+    write('dim', 'deploy key diperlukan jika repositori privat. npm tidak dijalankan di server.');
+
+    return rows;
+});
+
+function onScreenScroll() {
+    const element = screen.value;
+    if (!element) {
+        return;
+    }
+
+    stickToEnd.value = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+}
+
+watch(lines, async () => {
+    await nextTick();
+    if (stickToEnd.value && screen.value) {
+        screen.value.scrollTop = screen.value.scrollHeight;
+    }
+});
 
 function formatDate(value) {
     if (!value) {
@@ -148,30 +255,6 @@ onUnmounted(stop);
             Tampilan sudah dibangun sebelum di-push, jadi server tidak menjalankan npm. Berkas .env, database, dan unggahan tidak ikut tertimpa.
         </p>
 
-        <div class="mt-6 grid gap-3 sm:grid-cols-2">
-            <article class="rounded-2xl border border-cv-line bg-cv-elevated p-5">
-                <p class="text-sm text-cv-muted">Repositori</p>
-                <p class="mt-2 font-display text-2xl">{{ data?.repository || '—' }}</p>
-                <p class="mt-1 text-sm text-cv-muted">Cabang {{ data?.branch || 'main' }}</p>
-            </article>
-            <article class="rounded-2xl border border-cv-line bg-cv-elevated p-5">
-                <p class="text-sm text-cv-muted">Versi terpasang</p>
-                <p class="mt-2 font-display text-2xl">{{ data?.commit?.short || '—' }}</p>
-                <p class="mt-1 text-sm text-cv-muted">{{ data?.commit?.subject }}</p>
-                <p v-if="data?.commit?.date" class="mt-1 text-sm text-cv-muted">{{ formatDate(data.commit.date) }}</p>
-            </article>
-        </div>
-
-        <p v-if="missing.length" class="mt-4 text-sm text-red-700 dark:text-red-300">
-            PHP di server ini belum bisa menjalankan: {{ missing.join(', ') }}.
-        </p>
-        <p v-if="data?.dirty?.length" class="mt-4 text-sm text-red-700 dark:text-red-300">
-            Ada perubahan lokal yang belum di-commit: {{ data.dirty.join(', ') }}. Pembaruan dihentikan supaya perubahan itu tidak tertimpa.
-        </p>
-        <p v-if="(data?.ahead ?? 0) > 0" class="mt-4 text-sm text-red-700 dark:text-red-300">
-            Server punya {{ data.ahead }} komit yang belum ada di GitHub. Pembaruan otomatis tidak dijalankan.
-        </p>
-
         <div class="mt-6 flex flex-col gap-3 sm:flex-row">
             <button type="button" class="rounded-full bg-cv-ink px-5 py-3 text-sm text-cv-bg disabled:opacity-60" :disabled="busy" @click="check">
                 {{ pending ? 'Mengecek…' : 'Cek GitHub' }}
@@ -189,30 +272,45 @@ onUnmounted(stop);
             </button>
         </div>
 
-        <p v-if="notice" class="mt-4 text-sm text-cv-accent">{{ notice }}</p>
-        <p v-if="error" class="mt-4 whitespace-pre-wrap text-sm text-red-700 dark:text-red-300">{{ error }}</p>
-
-        <ul v-if="data?.pending?.commits?.length" class="mt-6 divide-y divide-cv-line rounded-2xl border border-cv-line">
-            <li v-for="commit in data.pending.commits" :key="commit.hash" class="px-4 py-3 text-sm">
-                <span class="font-mono text-cv-accent">{{ commit.hash }}</span>
-                <span class="ml-3">{{ commit.subject }}</span>
-            </li>
-        </ul>
-
-        <ol v-if="job.steps?.length" class="mt-6 space-y-3">
-            <li v-for="step in job.steps" :key="step.key" class="rounded-2xl border border-cv-line bg-cv-elevated p-4">
-                <div class="flex items-center justify-between gap-3 text-sm">
-                    <span>{{ step.label }}</span>
-                    <span class="text-cv-muted">{{ statusLabel[step.status] || step.status }}</span>
+        <div class="term mt-6 overflow-hidden rounded-xl border border-black/50 bg-[#101412] shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+            <div class="flex items-center gap-2 border-b border-white/10 bg-[#1a211c] px-4 py-2.5">
+                <span class="size-2.5 rounded-full bg-[#ff5f57]"></span>
+                <span class="size-2.5 rounded-full bg-[#febc2e]"></span>
+                <span class="size-2.5 rounded-full bg-[#28c840]"></span>
+                <p class="ml-2 truncate font-mono text-xs text-[#8b978f]">{{ host }} — pembaruan</p>
+            </div>
+            <div class="relative h-[28rem]">
+                <div
+                    ref="screen"
+                    class="h-full overflow-auto px-4 py-3 font-mono text-[13px] leading-6 text-[#d7e0d8]"
+                    @scroll="onScreenScroll"
+                >
+                    <p v-for="(line, index) in lines" :key="index" class="whitespace-pre-wrap break-words">
+                        <span v-if="line.kind === 'prompt'" class="text-[#7dcea0]">{{ line.text }}</span>
+                        <span v-else-if="line.kind === 'ok'" class="text-[#9ddead]">{{ line.text }}</span>
+                        <span v-else-if="line.kind === 'err'" class="text-[#f07178]">{{ line.text }}</span>
+                        <span v-else-if="line.kind === 'dim'" class="text-[#8b978f]">{{ line.text }}</span>
+                        <span v-else>{{ line.text }}</span>
+                    </p>
+                    <p class="flex items-center">
+                        <span class="text-[#7dcea0]">{{ prompt }}</span>
+                        <span class="term-cursor ml-2 inline-block h-4 w-2 bg-[#d7e0d8]"></span>
+                    </p>
                 </div>
-                <pre v-if="step.output" class="mt-3 max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-cv-bg p-3 text-xs text-cv-muted">{{ step.output }}</pre>
-            </li>
-        </ol>
-
-        <p v-if="job.message && job.state !== 'idle'" class="mt-4 text-sm text-cv-muted">{{ job.message }}</p>
-        <p class="mt-8 max-w-2xl text-sm text-cv-muted">
-            Server butuh akses baca ke GitHub untuk user yang menjalankan PHP. Jika cek gagal karena autentikasi, pasang deploy key pada user itu.
-            Pembaruan menjalankan git pull, composer install, migrasi, lalu menghidupkan situs kembali.
-        </p>
+                <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[length:100%_4px]"></div>
+            </div>
+        </div>
     </section>
 </template>
+
+<style scoped>
+.term-cursor {
+    animation: term-blink 1.05s steps(1) infinite;
+}
+
+@keyframes term-blink {
+    50% {
+        opacity: 0;
+    }
+}
+</style>
