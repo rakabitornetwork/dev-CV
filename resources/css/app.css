@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../js/**/*.{js,jsx,vue}';
+@source '../views/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+    --cv-bg: #f3efe6;
+    --cv-elevated: #fffdf8;
+    --cv-ink: #1c1a16;
+    --cv-muted: #6f695e;
+    --cv-line: rgba(28, 26, 22, 0.12);
+    --cv-accent: #8a5a32;
+    --cv-accent-soft: #efe4d6;
+    color-scheme: light;
+}
+
+.dark {
+    --cv-bg: #0c0c0a;
+    --cv-elevated: #161613;
+    --cv-ink: #f4f0e6;
+    --cv-muted: #aaa396;
+    --cv-line: rgba(244, 240, 230, 0.14);
+    --cv-accent: #e4c79a;
+    --cv-accent-soft: rgba(228, 199, 154, 0.14);
+    color-scheme: dark;
+}
+
+@theme inline {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Syne', 'Instrument Sans', ui-sans-serif, sans-serif;
+    --color-cv-bg: var(--cv-bg);
+    --color-cv-elevated: var(--cv-elevated);
+    --color-cv-ink: var(--cv-ink);
+    --color-cv-muted: var(--cv-muted);
+    --color-cv-line: var(--cv-line);
+    --color-cv-accent: var(--cv-accent);
+    --color-cv-accent-soft: var(--cv-accent-soft);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
