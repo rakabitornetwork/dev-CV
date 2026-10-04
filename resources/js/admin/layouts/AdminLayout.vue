@@ -56,7 +56,7 @@ router.afterEach(close);
             </nav>
             <div class="mt-4 flex flex-col gap-2">
                 <a href="/" target="_blank" class="rounded-xl px-3 py-2 text-sm text-cv-muted">Lihat halaman CV</a>
-                <button type="button" class="flex items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-cv-muted" @click="logout">
+                <button type="button" class="flex items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-red-700 hover:bg-red-700/10 dark:text-red-400" @click="logout">
                     <Icon name="LogOut" />
                     Keluar
                 </button>
