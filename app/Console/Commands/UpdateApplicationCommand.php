@@ -7,9 +7,9 @@ use Illuminate\Console\Command;
 
 class UpdateApplicationCommand extends Command
 {
-    protected $signature = 'app:update {--rebuild : Bangun ulang dependensi dan tampilan tanpa git pull}';
+    protected $signature = 'app:update {--rebuild : Pasang ulang dependensi PHP tanpa git pull}';
 
-    protected $description = 'Tarik kode dari GitHub, pasang dependensi, bangun tampilan, lalu migrasi';
+    protected $description = 'Tarik kode dari GitHub, pasang dependensi PHP, lalu migrasi';
 
     public function handle(Deployer $deployer): int
     {

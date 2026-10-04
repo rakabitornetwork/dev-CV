@@ -13,7 +13,7 @@ const busy = computed(() => pending.value || ['queued', 'running'].includes(job.
 const missing = computed(() => {
     const binaries = data.value?.binaries ?? {};
 
-    return ['git', 'composer', 'npm'].filter((name) => binaries[name] === false);
+    return ['git', 'composer'].filter((name) => binaries[name] === false);
 });
 const blocked = computed(() => missing.value.length > 0 || (data.value?.dirty?.length ?? 0) > 0 || (data.value?.ahead ?? 0) > 0);
 const statusLabel = {
@@ -64,7 +64,7 @@ async function check() {
 
 async function apply(mode) {
     const question = mode === 'rebuild'
-        ? 'Bangun ulang dependensi dan tampilan di server ini? Situs masuk mode pemeliharaan sebentar.'
+        ? 'Pasang ulang dependensi PHP di server ini? Situs masuk mode pemeliharaan sebentar.'
         : 'Pasang pembaruan dari GitHub di server ini? Situs masuk mode pemeliharaan sebentar.';
 
     if (!window.confirm(question)) {
@@ -133,7 +133,7 @@ onUnmounted(stop);
         <h1 class="mt-1 font-display text-4xl">Pembaruan</h1>
         <p class="mt-2 max-w-2xl text-sm text-cv-muted">
             Tombol di halaman ini memperbarui salinan yang sedang dibuka, yaitu {{ data?.site || 'situs ini' }}.
-            Berkas .env, database, dan unggahan tidak ikut tertimpa.
+            Tampilan sudah dibangun sebelum di-push, jadi server tidak menjalankan npm. Berkas .env, database, dan unggahan tidak ikut tertimpa.
         </p>
 
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
@@ -173,7 +173,7 @@ onUnmounted(stop);
                 Pasang pembaruan
             </button>
             <button type="button" class="rounded-full border border-cv-line px-5 py-3 text-sm disabled:opacity-60" :disabled="busy || blocked" @click="apply('rebuild')">
-                Bangun ulang
+                Pasang ulang
             </button>
         </div>
 
@@ -200,7 +200,7 @@ onUnmounted(stop);
         <p v-if="job.message && job.state !== 'idle'" class="mt-4 text-sm text-cv-muted">{{ job.message }}</p>
         <p class="mt-8 max-w-2xl text-sm text-cv-muted">
             Server butuh akses baca ke GitHub untuk user yang menjalankan PHP. Jika cek gagal karena autentikasi, pasang deploy key pada user itu.
-            Pembaruan menjalankan git pull, composer install, npm, migrasi, lalu menghidupkan situs kembali.
+            Pembaruan menjalankan git pull, composer install, migrasi, lalu menghidupkan situs kembali.
         </p>
     </section>
 </template>

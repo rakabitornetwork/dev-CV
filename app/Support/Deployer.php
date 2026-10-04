@@ -27,7 +27,6 @@ class Deployer
             'binaries' => [
                 'git' => $this->resolveBinary('git') !== null,
                 'composer' => $this->resolveBinary('composer') !== null,
-                'npm' => $this->resolveBinary('npm') !== null,
                 'php' => PHP_VERSION,
             ],
             'job' => $this->readJob(),
@@ -207,27 +206,12 @@ class Deployer
             $composer[] = '--no-dev';
         }
 
-        $npm = $this->resolveBinary('npm') ?? 'npm';
-        $install = is_file(base_path('package-lock.json')) ? 'ci' : 'install';
-
         return [
             ...$steps,
             [
                 'key' => 'composer',
                 'label' => 'Pasang dependensi PHP',
                 'command' => $composer,
-                'timeout' => 600,
-            ],
-            [
-                'key' => 'npm',
-                'label' => 'Pasang dependensi tampilan',
-                'command' => [$npm, $install],
-                'timeout' => 600,
-            ],
-            [
-                'key' => 'build',
-                'label' => 'Bangun tampilan',
-                'command' => [$npm, 'run', 'build'],
                 'timeout' => 600,
             ],
             [
@@ -257,7 +241,7 @@ class Deployer
      */
     private function missingBinaries(bool $rebuild): array
     {
-        $required = $rebuild ? ['composer', 'npm'] : ['git', 'composer', 'npm'];
+        $required = $rebuild ? ['composer'] : ['git', 'composer'];
         $missing = [];
 
         foreach ($required as $name) {
@@ -618,7 +602,6 @@ class Deployer
         return match ($name) {
             'git' => ['git.exe', 'git'],
             'composer' => ['composer.bat', 'composer.phar', 'composer'],
-            'npm' => ['npm.cmd', 'npm'],
             default => [$name],
         };
     }

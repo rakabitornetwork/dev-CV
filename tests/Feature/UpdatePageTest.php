@@ -48,25 +48,26 @@ class UpdatePageTest extends TestCase
             ->assertJsonPath('message', 'Pembaruan tidak dijalankan saat pengujian.');
     }
 
-    public function test_update_pipeline_pulls_before_the_build(): void
+    public function test_update_pipeline_pulls_code_and_skips_npm(): void
     {
         $lines = collect(app(Deployer::class)->pipeline(false))
             ->map(fn (array $step) => implode(' ', $step['command']))
             ->implode("\n");
 
-        $this->assertLessThan(strpos($lines, 'run build'), strpos($lines, 'pull --ff-only'));
-        $this->assertStringContainsString('migrate --force', $lines);
+        $this->assertLessThan(strpos($lines, 'migrate --force'), strpos($lines, 'pull --ff-only'));
+        $this->assertStringNotContainsString('npm', $lines);
         $this->assertStringNotContainsString('--no-dev', $lines);
     }
 
-    public function test_rebuild_pipeline_does_not_pull(): void
+    public function test_rebuild_pipeline_does_not_pull_or_build_assets(): void
     {
         $lines = collect(app(Deployer::class)->pipeline(true))
             ->map(fn (array $step) => implode(' ', $step['command']))
             ->implode("\n");
 
         $this->assertStringNotContainsString('pull', $lines);
-        $this->assertStringContainsString('run build', $lines);
+        $this->assertStringNotContainsString('npm', $lines);
+        $this->assertStringContainsString('migrate --force', $lines);
     }
 
     private function signIn(): void

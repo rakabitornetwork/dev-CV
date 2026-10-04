@@ -18,7 +18,6 @@ return [
     'binaries' => [
         'git' => env('DEPLOY_GIT', 'git'),
         'composer' => env('DEPLOY_COMPOSER', 'composer'),
-        'npm' => env('DEPLOY_NPM', 'npm'),
     ],
 
 ];
