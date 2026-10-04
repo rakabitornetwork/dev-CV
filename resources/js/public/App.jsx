@@ -107,6 +107,29 @@ export default function App({ cv }) {
     );
 }
 
+function socialBrand(social) {
+    const label = (social.label || '').toLowerCase();
+    const url = (social.url || '').toLowerCase();
+
+    if (social.icon === 'Github' || label.includes('github') || url.includes('github.com')) {
+        return { icon: 'Github', iconClass: 'text-[#24292f] dark:text-white', chip: 'border-[#24292f]/30 dark:border-white/25' };
+    }
+
+    if (label.includes('whatsapp') || url.includes('wa.me') || url.includes('whatsapp')) {
+        return { icon: 'Whatsapp', iconClass: 'text-[#25D366]', chip: 'border-[#25D366]/45' };
+    }
+
+    if (social.icon === 'Mail' || label.includes('email') || label.includes('mail') || url.startsWith('mailto:')) {
+        return { icon: 'Mail', iconClass: 'text-[#EA4335]', chip: 'border-[#EA4335]/40' };
+    }
+
+    if (social.icon === 'Globe' || label.includes('situs') || label.includes('web')) {
+        return { icon: 'Globe', iconClass: 'text-[#2D9CDB]', chip: 'border-[#2D9CDB]/45' };
+    }
+
+    return { icon: social.icon, iconClass: 'text-cv-accent', chip: 'border-cv-line' };
+}
+
 function Hero({ profile, socials }) {
     return (
         <section id="atas" className="relative">
@@ -147,18 +170,22 @@ function Hero({ profile, socials }) {
                     </div>
                     {socials.length > 0 && (
                         <div className="mt-8 flex flex-wrap gap-2">
-                            {socials.map((social) => (
-                                <a
-                                    key={social.id}
-                                    href={social.url}
-                                    className="inline-flex items-center gap-2 rounded-full border border-cv-line px-3 py-2 text-sm text-cv-muted hover:text-cv-ink"
-                                    target={social.url.startsWith('http') ? '_blank' : undefined}
-                                    rel={social.url.startsWith('http') ? 'noreferrer' : undefined}
-                                >
-                                    <CvIcon name={social.icon} className="size-4" />
-                                    {social.label}
-                                </a>
-                            ))}
+                            {socials.map((social) => {
+                                const brand = socialBrand(social);
+
+                                return (
+                                    <a
+                                        key={social.id}
+                                        href={social.url}
+                                        className={`inline-flex items-center gap-2 rounded-full border bg-cv-elevated px-3 py-2 text-sm text-cv-muted hover:text-cv-ink ${brand.chip}`}
+                                        target={social.url.startsWith('http') ? '_blank' : undefined}
+                                        rel={social.url.startsWith('http') ? 'noreferrer' : undefined}
+                                    >
+                                        <CvIcon name={brand.icon} className={`size-4 ${brand.iconClass}`} />
+                                        {social.label}
+                                    </a>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
