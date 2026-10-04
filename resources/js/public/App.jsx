@@ -132,8 +132,14 @@ function socialBrand(social) {
 
 function Hero({ profile, socials }) {
     return (
-        <section id="atas" className="relative">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_top,var(--cv-accent-soft),transparent_68%)]" />
+        <section id="atas" className="relative overflow-hidden">
+            <img
+                src="/images/hero-workshop.jpg"
+                alt=""
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[72%_center]"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cv-bg via-cv-bg/90 to-cv-bg/40" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-cv-bg/25 via-transparent to-cv-bg" />
             <div className="relative mx-auto grid max-w-6xl items-end gap-12 px-5 pt-16 pb-20 lg:grid-cols-12 lg:pt-24">
                 <div className="lg:col-span-7">
                     {profile.availability_label && (
