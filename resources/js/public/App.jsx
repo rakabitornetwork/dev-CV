@@ -115,7 +115,10 @@ function Hero({ profile, socials }) {
                 <div className="lg:col-span-7">
                     {profile.availability_label && (
                         <p className="inline-flex items-center gap-2 rounded-full border border-cv-line bg-cv-elevated px-3 py-1 text-sm text-cv-muted">
-                            <span className="size-2 rounded-full bg-emerald-500" />
+                            <span className="relative flex size-2">
+                                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                                <span className="relative size-2 rounded-full bg-emerald-500" />
+                            </span>
                             {profile.availability_label}
                         </p>
                     )}
