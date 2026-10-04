@@ -5,6 +5,7 @@ import DashboardView from './views/DashboardView.vue';
 import ProfileView from './views/ProfileView.vue';
 import SectionsView from './views/SectionsView.vue';
 import ResourceView from './views/ResourceView.vue';
+import UpdateView from './views/UpdateView.vue';
 import { fetchMe, currentUser } from './session';
 
 const router = createRouter({
@@ -24,6 +25,7 @@ const router = createRouter({
                 { path: 'skills', component: ResourceView, props: { kind: 'skills' } },
                 { path: 'projects', component: ResourceView, props: { kind: 'projects' } },
                 { path: 'testimonials', component: ResourceView, props: { kind: 'testimonials' } },
+                { path: 'pembaruan', component: UpdateView },
             ],
         },
     ],

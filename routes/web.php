@@ -5,10 +5,13 @@ use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\Admin\UpdateController;
+use App\Http\Controllers\CvDownloadController;
 use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
+Route::get('/cv/unduh', CvDownloadController::class)->name('cv.download');
 
 Route::prefix('admin/api')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
@@ -17,6 +20,9 @@ Route::prefix('admin/api')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::get('/dashboard', DashboardController::class);
+        Route::get('/updates', [UpdateController::class, 'show']);
+        Route::post('/updates/check', [UpdateController::class, 'check'])->middleware('throttle:12,1');
+        Route::post('/updates', [UpdateController::class, 'store'])->middleware('throttle:5,10');
         Route::get('/profile', [ProfileController::class, 'show']);
         Route::post('/profile', [ProfileController::class, 'update']);
 

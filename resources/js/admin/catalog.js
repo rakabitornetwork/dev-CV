@@ -21,6 +21,7 @@ export const navigation = [
     { to: '/admin/skills', label: 'Keahlian', icon: 'Sparkles' },
     { to: '/admin/projects', label: 'Proyek', icon: 'FolderKanban' },
     { to: '/admin/testimonials', label: 'Testimoni', icon: 'Quote' },
+    { to: '/admin/pembaruan', label: 'Pembaruan', icon: 'RefreshCw' },
 ];
 
 export const resources = {

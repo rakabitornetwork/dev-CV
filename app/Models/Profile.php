@@ -40,7 +40,7 @@ class Profile extends Model
             'availability_label' => $this->availability_label,
             'seo_title' => $this->seo_title,
             'seo_description' => $this->seo_description,
-            'cv_url' => Media::url($this->cv_pdf_path),
+            'cv_url' => route('cv.download'),
         ];
     }
 }

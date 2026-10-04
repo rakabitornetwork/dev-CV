@@ -36,7 +36,6 @@ class DatabaseSeeder extends Seeder
             $model::query()->delete();
         }
 
-        Storage::disk('public')->put('cv/amon-pratama.pdf', $this->pdf());
         $this->publishPhotos();
 
         Profile::query()->create([
@@ -51,7 +50,7 @@ class DatabaseSeeder extends Seeder
             'availability_label' => 'Tersedia untuk kolaborasi',
             'seo_title' => 'Amon Pratama — Software Engineer',
             'seo_description' => 'Curriculum vitae Amon Pratama, software engineer di Jakarta. Pengalaman membangun produk web dengan Laravel, React, dan Vue.',
-            'cv_pdf_path' => 'cv/amon-pratama.pdf',
+            'cv_pdf_path' => null,
         ]);
 
         $sections = [
@@ -218,32 +217,4 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    private function pdf(): string
-    {
-        $stream = 'BT /F1 20 Tf 72 740 Td (CV Amon Pratama) Tj ET';
-        $objects = [
-            "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n",
-            "2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n",
-            "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n",
-            '4 0 obj<</Length '.strlen($stream).">>stream\n{$stream}\nendstream\nendobj\n",
-            "5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\n",
-        ];
-
-        $pdf = "%PDF-1.4\n";
-        $offsets = [0];
-
-        foreach ($objects as $object) {
-            $offsets[] = strlen($pdf);
-            $pdf .= $object;
-        }
-
-        $xref = strlen($pdf);
-        $pdf .= "xref\n0 6\n0000000000 65535 f \n";
-
-        for ($index = 1; $index <= 5; $index++) {
-            $pdf .= sprintf("%010d 00000 n \n", $offsets[$index]);
-        }
-
-        return $pdf."trailer<</Size 6/Root 1 0 R>>\nstartxref\n{$xref}\n%%EOF";
-    }
 }

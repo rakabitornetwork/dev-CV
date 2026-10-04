@@ -54,6 +54,48 @@ class CvLandingTest extends TestCase
             ->assertSee('Headline yang baru saja diubah');
     }
 
+    public function test_cv_download_is_built_from_the_profile(): void
+    {
+        $this->seed();
+
+        Profile::query()->update([
+            'name' => 'Achmad Nurohman',
+            'location' => 'Indramayu, Indonesia',
+            'cv_pdf_path' => 'cv/amon-pratama.pdf',
+        ]);
+
+        $response = $this->get(route('cv.download'));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+        $this->assertStringContainsString(
+            'achmad-nurohman-cv.pdf',
+            (string) $response->headers->get('content-disposition'),
+        );
+
+        $text = str_replace("\0", '', $this->pdfText($response->getContent()));
+        $text = preg_replace('/\s+/', '', $text) ?? '';
+        $this->assertTrue(str_contains($text, 'AchmadNurohman'), 'PDF is missing the profile name.');
+        $this->assertTrue(str_contains($text, 'Indramayu,Indonesia'), 'PDF is missing the profile location.');
+        $this->assertFalse(str_contains($text, 'CVAmonPratama'), 'PDF still contains the placeholder title.');
+    }
+
+    private function pdfText(string $pdf): string
+    {
+        $text = '';
+
+        if (! preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $pdf, $matches)) {
+            return $pdf;
+        }
+
+        foreach ($matches[1] as $stream) {
+            $decoded = @gzuncompress($stream) ?: @gzinflate($stream);
+            $text .= is_string($decoded) ? $decoded : $stream;
+        }
+
+        return $text;
+    }
+
     public function test_guest_is_sent_to_the_admin_login_page(): void
     {
         $this->get('/admin')->assertRedirect('/admin/login');

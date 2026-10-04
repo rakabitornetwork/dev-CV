@@ -18,6 +18,7 @@ import {
     ChevronUp,
     Save,
     FileText,
+    RefreshCw,
 } from 'lucide-vue-next';
 
 const icons = {
@@ -39,6 +40,7 @@ const icons = {
     ChevronUp,
     Save,
     FileText,
+    RefreshCw,
 };
 
 defineProps({
